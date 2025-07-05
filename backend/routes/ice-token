@@ -1,0 +1,25 @@
+// routes/iceToken.js
+const express = require("express");
+const router = express.Router();
+const twilio = require("twilio");
+const dotenv = require("dotenv");
+dotenv.config();
+
+const wname = process.env.name;
+const lname = process.env.sirname;
+const client = twilio(wname, lname);
+
+router.get("/", async (req, res) => {
+  try {
+    const token = await client.tokens.create();
+
+    console.log(token.iceServers);
+
+    res.json({ iceServers: token.iceServers });
+  } catch (err) {
+    console.error("Error generating ICE token:", err);
+    res.status(500).json({ error: "Failed to get ICE token" });
+  }
+});
+
+module.exports = router;
