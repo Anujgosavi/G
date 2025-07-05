@@ -6,7 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-const iceTokenRoute = require('./routes/ice-token');
+const iceTokenRoute = require("./routes/ice-token");
 
 // Create uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, "uploads");
@@ -23,7 +23,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:3000",
-      "https://your-frontend-domain.vercel.app", // <-- add your deployed frontend domain here
+      "https://g-blush-five.vercel.app/", // <-- add your deployed frontend domain here
     ],
     methods: ["GET", "POST"],
   },
@@ -48,7 +48,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.use('/api/ice-token', iceTokenRoute);
+app.use("/api/ice-token", iceTokenRoute);
 
 // File upload endpoint
 app.post("/upload", upload.single("file"), (req, res) => {
@@ -56,7 +56,7 @@ app.post("/upload", upload.single("file"), (req, res) => {
     return res.status(400).json({ error: "No file uploaded" });
   }
   res.json({
-    filePath: `https://gather-office.onrender.com/${req.file.filename}`,
+    filePath: `https://g-production-e033.up.railway.app/${req.file.filename}`,
   });
 });
 
