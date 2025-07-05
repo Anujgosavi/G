@@ -68,7 +68,7 @@ const Canvas = () => {
   } = useGame(canvasRef, socketRef, keysRef);
 
   // Initialize canvas and socket
-  const SOCKET_URL = "https://g-production-e033.up.railway.app/"; // your production backend URL
+  const SOCKET_URL = "https://localhost:8080/"; // your production backend URL
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -86,9 +86,7 @@ const Canvas = () => {
   useEffect(() => {
     const fetchIceServers = async () => {
       try {
-        const res = await axios.get(
-          "https://g-production-e033.up.railway.app/api/ice-token"
-        );
+        const res = await axios.get("https://localhost:8080/api/ice-token");
         setIceConfig(res.data); // expects { iceServers: [...] }
       } catch (err) {
         console.error("Failed to fetch ICE servers:", err);

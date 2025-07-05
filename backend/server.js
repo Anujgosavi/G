@@ -21,7 +21,10 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins (or specify your frontend URL here)
+    origin: [
+      "http://localhost:3000",
+      "https://your-frontend-domain.vercel.app", // <-- add your deployed frontend domain here
+    ],
     methods: ["GET", "POST"],
   },
 });
@@ -53,7 +56,7 @@ app.post("/upload", upload.single("file"), (req, res) => {
     return res.status(400).json({ error: "No file uploaded" });
   }
   res.json({
-    filePath: `https://g-production-e033.up.railway.app/${req.file.filename}`,
+    filePath: `https://gather-office.onrender.com/${req.file.filename}`,
   });
 });
 
