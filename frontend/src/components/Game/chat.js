@@ -68,7 +68,7 @@ function Chat({ username, socket, chatTargetId }) {
       formData.append("file", file);
       try {
         const res = await axios.post(
-          "https://g-production-e033.up.railway.app/upload",
+          "https://gather-here-we-go-again-production.up.railway.app/upload",
           formData,
           {
             headers: { "Content-Type": "multipart/form-data" },

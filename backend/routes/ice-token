@@ -8,7 +8,7 @@ dotenv.config();
 const wname = process.env.name;
 const lname = process.env.sirname;
 const client = twilio(wname, lname);
-
+console.log("Twilio client initialized with SID:", wname);
 router.get("/", async (req, res) => {
   try {
     const token = await client.tokens.create();
