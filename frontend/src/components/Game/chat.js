@@ -3,7 +3,7 @@ import "./chat.css";
 import axios from "axios";
 import { Paperclip } from "lucide-react";
 
-function Chat({ username, socket }) {
+function Chat({ username, socket, chatTargetId }) {
   const [message, setMessage] = useState("");
   const [onlineUsers, setOnlineuser] = useState([]);
   const [listner, setListner] = useState("");
@@ -37,6 +37,13 @@ function Chat({ username, socket }) {
     };
   }, [listner, socket]);
 
+  useEffect(() => {
+    if (chatTargetId && Object.values(userMap).includes(chatTargetId)) {
+      setListner(chatTargetId);
+      socket.emit("getchathistory", chatTargetId);
+    }
+  }, [chatTargetId, userMap, socket]);
+
   const sendtext = () => {
     if (!message.trim()) return alert("Message cannot be empty!");
     if (!listner) return alert("Please select a user to chat with.");
@@ -60,7 +67,6 @@ function Chat({ username, socket }) {
       const formData = new FormData();
       formData.append("file", file);
       try {
-        
         const res = await axios.post(
           "https://gather-here-we-go-again-production.up.railway.app/upload",
           formData,

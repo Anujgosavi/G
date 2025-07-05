@@ -68,8 +68,8 @@ const Canvas = () => {
   } = useGame(canvasRef, socketRef, keysRef);
 
   // Initialize canvas and socket
-  const SOCKET_URL = "https://gather-here-we-go-again-production.up.railway.app/" // your production backend URL
-      
+  const SOCKET_URL =
+    "https://gather-here-we-go-again-production.up.railway.app/"; // your production backend URL
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -87,12 +87,16 @@ const Canvas = () => {
   useEffect(() => {
     const fetchIceServers = async () => {
       try {
-        const res = await axios.get("https://gather-here-we-go-again-production.up.railway.app/api/ice-token");
+        const res = await axios.get(
+          "https://gather-here-we-go-again-production.up.railway.app/api/ice-token"
+        );
         setIceConfig(res.data); // expects { iceServers: [...] }
       } catch (err) {
         console.error("Failed to fetch ICE servers:", err);
         // fallback to public STUN if needed
-        setIceConfig({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+        setIceConfig({
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        });
       }
     };
     fetchIceServers();
@@ -212,17 +216,25 @@ const Canvas = () => {
         interactionMenu.current.selectedOption === "voiceChat" &&
         interactionMenu.current.targetId
       ) {
-        // Initialize caller's side of the call
+        // Voice chat logic (already working)
         setCallPeerId(interactionMenu.current.targetId);
         setVideoCall((vc) => ({ ...vc, active: true }));
-
-        // Send call event to server
         if (socketRef.current) {
           socketRef.current.emit("callUser", {
             targetId: interactionMenu.current.targetId,
             callerName: playerName,
           });
         }
+        interactionMenu.current.hide();
+        return true;
+      }
+      // --- Add this for chat option ---
+      if (
+        interactionMenu.current.visible &&
+        interactionMenu.current.selectedOption === "chat" &&
+        interactionMenu.current.targetId
+      ) {
+        openChatWithUser(interactionMenu.current.targetId);
         interactionMenu.current.hide();
         return true;
       }
@@ -320,7 +332,8 @@ const Canvas = () => {
               await pc.addIceCandidate(new RTCIceCandidate(candidate));
             } else {
               // Queue ICE candidates until remoteDescription is set
-              if (!iceCandidateQueue.current[from]) iceCandidateQueue.current[from] = [];
+              if (!iceCandidateQueue.current[from])
+                iceCandidateQueue.current[from] = [];
               iceCandidateQueue.current[from].push(candidate);
             }
           }
@@ -365,7 +378,9 @@ const Canvas = () => {
           typeof rtcConfig !== "object" ||
           !Array.isArray(rtcConfig.iceServers)
         ) {
-          rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+          rtcConfig = {
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+          };
         }
         pc = new window.RTCPeerConnection(rtcConfig);
         peerConnectionRef.current = pc;
@@ -425,7 +440,8 @@ const Canvas = () => {
               if (pc.remoteDescription && pc.remoteDescription.type) {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
               } else {
-                if (!iceCandidateQueue.current[from]) iceCandidateQueue.current[from] = [];
+                if (!iceCandidateQueue.current[from])
+                  iceCandidateQueue.current[from] = [];
                 iceCandidateQueue.current[from].push(candidate);
               }
             }
@@ -717,6 +733,15 @@ const Canvas = () => {
     return collisions[gridY]?.[gridX] === 2;
   })();
 
+  // Add this state to track which user to chat with
+  const [chatTargetId, setChatTargetId] = useState(null);
+
+  // Function to open chat with a specific user
+  const openChatWithUser = (userId) => {
+    setShowChat(true);
+    setChatTargetId(userId);
+  };
+
   return (
     <div className="game-container" ref={gameContainerRef}>
       {/* Conference Room Banner (show on hover or when inside) */}
@@ -746,7 +771,9 @@ const Canvas = () => {
             opacity: isPlayerInConferenceRoom ? 1 : 0.85,
           }}
         >
-          <span role="img" aria-label="Conference" style={{ fontSize: 28 }}>🏢</span>
+          <span role="img" aria-label="Conference" style={{ fontSize: 28 }}>
+            🏢
+          </span>
           Conference Room
         </div>
       )}
@@ -836,7 +863,15 @@ const Canvas = () => {
               position: "relative",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 18 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 14,
+                marginBottom: 18,
+              }}
+            >
               <span
                 style={{
                   fontSize: 34,
@@ -860,13 +895,31 @@ const Canvas = () => {
                 Incoming Call
               </span>
             </div>
-            <div style={{ marginBottom: 24, fontSize: 18, color: "#fff", textShadow: "0 1px 0 #222" }}>
-              <span style={{ color: "#ffe066", fontWeight: "bold" }}>{incomingCall.callerName}</span> is calling you...
+            <div
+              style={{
+                marginBottom: 24,
+                fontSize: 18,
+                color: "#fff",
+                textShadow: "0 1px 0 #222",
+              }}
+            >
+              <span style={{ color: "#ffe066", fontWeight: "bold" }}>
+                {incomingCall.callerName}
+              </span>{" "}
+              is calling you...
             </div>
-            <div style={{ display: "flex", gap: 24, justifyContent: "center", marginTop: 10 }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 24,
+                justifyContent: "center",
+                marginTop: 10,
+              }}
+            >
               <button
                 style={{
-                  background: "linear-gradient(90deg, #4CAF50 0%, #43e97b 100%)",
+                  background:
+                    "linear-gradient(90deg, #4CAF50 0%, #43e97b 100%)",
                   color: "#fff",
                   border: "none",
                   borderRadius: "8px",
@@ -886,7 +939,8 @@ const Canvas = () => {
               </button>
               <button
                 style={{
-                  background: "linear-gradient(90deg, #ff4b4b 0%, #ffb199 100%)",
+                  background:
+                    "linear-gradient(90deg, #ff4b4b 0%, #ffb199 100%)",
                   color: "#fff",
                   border: "none",
                   borderRadius: "8px",
@@ -956,25 +1010,29 @@ const Canvas = () => {
               position: "relative",
             }}
           >
-            <div style={{
-              fontWeight: "bold",
-              color: "#4a6cf7",
-              textShadow: "0 2px 0 #e0e6ff, 0 0px 8px #4a6cf733",
-              fontSize: 28,
-              letterSpacing: "2px",
-              marginBottom: 18,
-              marginTop: 2,
-              fontFamily: "'Press Start 2P', 'VT323', 'monospace', monospace"
-            }}>
+            <div
+              style={{
+                fontWeight: "bold",
+                color: "#4a6cf7",
+                textShadow: "0 2px 0 #e0e6ff, 0 0px 8px #4a6cf733",
+                fontSize: 28,
+                letterSpacing: "2px",
+                marginBottom: 18,
+                marginTop: 2,
+                fontFamily: "'Press Start 2P', 'VT323', 'monospace', monospace",
+              }}
+            >
               Video Call
             </div>
-            <div style={{
-              display: "flex",
-              gap: 36,
-              margin: "0 0 14px 0",
-              justifyContent: "center",
-              alignItems: "center"
-            }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 36,
+                margin: "0 0 14px 0",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -988,7 +1046,7 @@ const Canvas = () => {
                   border: "2px solid #4a6cf7",
                   boxShadow: "0 2px 12px #4a6cf722",
                   objectFit: "cover",
-                  transition: "border 0.2s"
+                  transition: "border 0.2s",
                 }}
               />
               <video
@@ -1003,18 +1061,20 @@ const Canvas = () => {
                   border: "2px solid #4a6cf7",
                   boxShadow: "0 2px 12px #4a6cf722",
                   objectFit: "cover",
-                  transition: "border 0.2s"
+                  transition: "border 0.2s",
                 }}
               />
             </div>
             {/* Mute/Unmute and Video On/Off Controls */}
-            <div style={{
-              display: "flex",
-              gap: 24,
-              margin: "14px 0 0 0",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 24,
+                margin: "14px 0 0 0",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <button
                 onClick={handleToggleMute}
                 style={{
@@ -1063,7 +1123,8 @@ const Canvas = () => {
               </button>
               <button
                 style={{
-                  background: "linear-gradient(90deg, #ff4b4b 0%, #ffb199 100%)",
+                  background:
+                    "linear-gradient(90deg, #ff4b4b 0%, #ffb199 100%)",
                   color: "white",
                   border: "none",
                   borderRadius: "10px",
@@ -1091,7 +1152,7 @@ const Canvas = () => {
                 letterSpacing: "0.5px",
                 fontFamily: "inherit",
                 textShadow: "0 1px 0 #fff",
-                fontWeight: "bold"
+                fontWeight: "bold",
               }}
             >
               Socialize for XP!
@@ -1114,7 +1175,16 @@ const Canvas = () => {
             boxShadow: "0 4px 24px #000a",
           }}
         >
-          <h3 style={{ color: "white", margin: "0 0 10px 0", fontSize: 20, letterSpacing: 1 }}>Meeting Room</h3>
+          <h3
+            style={{
+              color: "white",
+              margin: "0 0 10px 0",
+              fontSize: 20,
+              letterSpacing: 1,
+            }}
+          >
+            Meeting Room
+          </h3>
           {/* Local video */}
           <div style={{ position: "relative", marginBottom: "12px" }}>
             <video
@@ -1159,7 +1229,10 @@ const Canvas = () => {
           {meetingRoomCall.remoteStreams &&
             Object.entries(meetingRoomCall.remoteStreams).map(
               ([userId, stream]) => (
-                <div key={userId + (stream ? stream.id : "")} style={{ position: "relative", marginBottom: "12px" }}>
+                <div
+                  key={userId + (stream ? stream.id : "")}
+                  style={{ position: "relative", marginBottom: "12px" }}
+                >
                   <video
                     autoPlay
                     playsInline
@@ -1196,7 +1269,9 @@ const Canvas = () => {
                     }}
                   >
                     {/* Show actual player name if available */}
-                    {meetingNameMap[userId] || otherPlayers[userId]?.name || `User ${userId.slice(-4)}`}
+                    {meetingNameMap[userId] ||
+                      otherPlayers[userId]?.name ||
+                      `User ${userId.slice(-4)}`}
                   </div>
                 </div>
               )
@@ -1244,7 +1319,11 @@ const Canvas = () => {
           >
             ×
           </button>
-          <Chat username={playerName} socket={socketRef.current} />
+          <Chat
+            username={playerName}
+            socket={socketRef.current}
+            chatTargetId={chatTargetId}
+          />
         </div>
       )}
       {/* Gamified Toast message for call end */}
@@ -1270,7 +1349,15 @@ const Canvas = () => {
             userSelect: "none",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 12,
+              marginBottom: 8,
+            }}
+          >
             <span
               style={{
                 fontSize: 28,
