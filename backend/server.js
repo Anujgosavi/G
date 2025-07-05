@@ -21,10 +21,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:3000",
-      "https://g-blush-five.vercel.app/", // <-- add your deployed frontend domain here
-    ],
+    origin: "*", // Allow all origins (or specify your frontend URL here)
     methods: ["GET", "POST"],
   },
 });
