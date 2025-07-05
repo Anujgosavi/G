@@ -803,7 +803,35 @@ const Canvas = () => {
         </div>
       </div>
       <div style={{ position: "relative" }}>
-        <canvas ref={canvasRef} width={1550} height={700} />
+        <canvas ref={canvasRef} width={1550} height={650} />
+        <div
+          style={{
+            marginTop: "5px",
+            textAlign: "center",
+            fontSize: "16px",
+            color: "#f8fafc",
+            fontFamily: "'Press Start 2P', 'VT323', 'monospace', monospace",
+            letterSpacing: "1px",
+            background: "linear-gradient(90deg, #23272e 0%, #3a3f4b 100%)",
+            borderRadius: "10px",
+            padding: "8px 0",
+            width: "100%",
+            maxWidth: 1550,
+            marginLeft: "auto",
+            marginRight: "auto",
+            boxShadow: "0 2px 12px #4a6cf755",
+            border: "2px solid #4a6cf7",
+            zIndex: 1000,
+            fontWeight: "bold",
+            textShadow: "0 2px 8px #2228",
+          }}
+        >
+          Press{" "}
+          <span style={{ fontWeight: "bold", color: "#ffe066" }}>"E"</span> key
+          when you are near a player to interact with them. Use Arrow keys to
+          move your player
+        </div>
+
         <button
           className="chat-button"
           onClick={() => setShowChat(!showChat)}
