@@ -183,11 +183,7 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
         const updated = { ...prev };
         const sprite = updated[playerInfo.id];
 
-        sprite.position = { ...playerInfo.position };
-        sprite.lastDirection = playerInfo.direction || sprite.lastDirection;
-        sprite.moving = playerInfo.moving || false;
-
-        // Only update image if characterIndex changed
+        // --- Only update image if characterIndex changed ---
         const newCharIndex =
           playerInfo.characterIndex !== undefined
             ? playerInfo.characterIndex % 4
@@ -198,6 +194,14 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
             sprite.image = characterImages[newCharIndex];
           }
         }
+
+        // --- Only update movement and direction ---
+        sprite.position = { ...playerInfo.position };
+        sprite.lastDirection = playerInfo.direction || sprite.lastDirection;
+        sprite.moving = !!playerInfo.moving;
+
+        // --- DO NOT update sprite.image every frame ---
+        // --- DO NOT recreate Sprite objects here ---
 
         return updated;
       });
