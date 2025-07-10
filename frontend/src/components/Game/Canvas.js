@@ -42,6 +42,8 @@ const Canvas = () => {
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [meetingMuteStates, setMeetingMuteStates] = useState({}); // { userId: boolean }
   const [meetingNameMap, setMeetingNameMap] = useState({}); // { userId: name }
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [characterIndex, setCharacterIndex] = useState(null);
 
   const {
     player,
@@ -65,11 +67,10 @@ const Canvas = () => {
     isInArea2,
     meetingRoomCall,
     setMeetingRoomCall,
-  } = useGame(canvasRef, socketRef, keysRef);
+  } = useGame(canvasRef, socketRef, keysRef, characterIndex);
 
   // Initialize canvas and socket
-  const SOCKET_URL =
-    "https://g-production-c75a.up.railway.app/"; // your production backend URL
+  const SOCKET_URL = "https://g-production-c75a.up.railway.app/"; // your production backend URL
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -107,24 +108,38 @@ const Canvas = () => {
     if (!tempPlayerName.trim()) return alert("Please enter a valid name");
     setPlayerName(tempPlayerName);
     setShowNameModal(false);
+    setShowAvatarModal(true); // Show avatar selection modal
+  };
 
-    // Register the name with the socket
+  // Add this function to handle avatar selection
+  const handleAvatarSelect = (index) => {
+    setCharacterIndex(index);
+    setShowAvatarModal(false);
+    // Register the name and avatar with the socket
     if (socketRef.current) {
-      socketRef.current.emit("register", tempPlayerName);
+      socketRef.current.emit("register", tempPlayerName, index);
     }
   };
 
   // Game initialization - now depends on playerName being set
   useEffect(() => {
-    if (!ctx || !socketRef.current || !playerName || !mapImage) return;
+    if (
+      !ctx ||
+      !socketRef.current ||
+      !playerName ||
+      !mapImage ||
+      characterIndex === null
+    )
+      return;
 
     const initialPlayer = new Sprite({
       position: findValidSpawnPosition(),
-      image: playerImages.down,
+      image: playerImages[characterIndex], // <-- Use array index
       frames: { max: 4 },
-      sprites: playerImages,
+      sprites: playerImages[characterIndex], // <-- Use array index
       name: playerName,
       speed: 3,
+      characterIndex, // Pass characterIndex to Sprite
     });
     setPlayer(initialPlayer);
   }, [
@@ -134,6 +149,7 @@ const Canvas = () => {
     findValidSpawnPosition,
     mapImage,
     playerImages,
+    characterIndex,
   ]);
 
   // Handle key presses for interaction
@@ -638,6 +654,7 @@ const Canvas = () => {
         position: player.position,
         direction: player.lastDirection,
         moving: true,
+        characterIndex: player.characterIndex, // Include characterIndex
       });
     }
 
@@ -794,7 +811,63 @@ const Canvas = () => {
           </div>
         </div>
       )}
-
+      {/* Avatar Selection Modal */}
+      {showAvatarModal && (
+        <div className="name-modal-backdrop">
+          <div className="name-modal">
+            <h2 style={{ color: "black" }}>Choose Your Avatar</h2>
+            <div
+              style={{
+                display: "flex",
+                gap: "20px",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                marginBottom: "20px",
+              }}
+            >
+              {[0, 1, 2, 3].map((index) => (
+                <div key={index} style={{ textAlign: "center" }}>
+                  <img
+                    src={`/images/chr${index + 1}.png`}
+                    alt={`Avatar ${index + 1}`}
+                    width={60}
+                    height={60}
+                    onClick={() => handleAvatarSelect(index)}
+                    style={{
+                      cursor: "pointer",
+                      border:
+                        characterIndex === index
+                          ? "3px solid #4CAF50"
+                          : "1px solid #ccc",
+                      borderRadius: "5px",
+                      background: "#fff",
+                    }}
+                  />
+                  <p style={{ color: "black", marginTop: "5px" }}>
+                    Avatar {index + 1}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() =>
+                handleAvatarSelect(characterIndex !== null ? characterIndex : 0)
+              }
+              disabled={characterIndex === null}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: characterIndex === null ? "#ccc" : "#4CAF50",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: characterIndex === null ? "not-allowed" : "pointer",
+              }}
+            >
+              Start Game
+            </button>
+          </div>
+        </div>
+      )}
       <div className="header-bar">
         <div className="game-logo">Virtual Office</div>
         <div className="player-controls">
