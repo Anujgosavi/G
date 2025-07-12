@@ -176,38 +176,22 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
   );
 
   // Multiplayer logic: handle player moved
-  const handlePlayerMoved = useCallback(
-    (playerInfo) => {
-      setOtherPlayers((prev) => {
-        if (!prev[playerInfo.id]) return prev;
-        const updated = { ...prev };
-        const sprite = updated[playerInfo.id];
+  const handlePlayerMoved = useCallback((playerInfo) => {
+    setOtherPlayers((prev) => {
+      if (!prev[playerInfo.id]) return prev;
+      const updated = { ...prev };
+      const sprite = updated[playerInfo.id];
 
-        // --- Only update image if characterIndex changed ---
-        const newCharIndex =
-          playerInfo.characterIndex !== undefined
-            ? playerInfo.characterIndex % 4
-            : 0;
-        if (sprite.characterIndex !== newCharIndex) {
-          sprite.characterIndex = newCharIndex;
-          if (characterImages[newCharIndex]) {
-            sprite.image = characterImages[newCharIndex];
-          }
-        }
+      // Only update movement and direction
+      sprite.position = { ...playerInfo.position };
+      sprite.lastDirection = playerInfo.direction || sprite.lastDirection;
+      sprite.moving = !!playerInfo.moving;
 
-        // --- Only update movement and direction ---
-        sprite.position = { ...playerInfo.position };
-        sprite.lastDirection = playerInfo.direction || sprite.lastDirection;
-        sprite.moving = !!playerInfo.moving;
+      // DO NOT update sprite.image or characterIndex here!
 
-        // --- DO NOT update sprite.image every frame ---
-        // --- DO NOT recreate Sprite objects here ---
-
-        return updated;
-      });
-    },
-    [characterImages]
-  );
+      return updated;
+    });
+  }, []);
 
   // Multiplayer logic: handle player disconnected
   const handlePlayerDisconnected = useCallback((playerId) => {

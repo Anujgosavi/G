@@ -22,8 +22,8 @@ class Sprite {
     this.moving = moving;
     this.prevMoving = moving; // Track previous moving state
     this.characterIndex = characterIndex;
-    this.width = 32;
-    this.height = 32;
+    this.width = 15;
+    this.height = 15;
     this.distanceToPlayer = null;
     this.showInteractionMenu = false;
     this.interactingWith = null;
@@ -34,9 +34,6 @@ class Sprite {
   setDirection(direction) {
     this.lastDirection = direction;
     this.moving = true;
-    if (this.sprites[direction]) {
-      this.image = this.sprites[direction];
-    }
   }
 
   updatePosition(newPosition) {
