@@ -9,7 +9,7 @@ const INTERACTION_RANGE = 50;
 const MAP_WIDTH = 1524;
 const MAP_HEIGHT = 776;
 
-const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
+const useGame = (canvasRef, socketRef, keysRef) => {
   const [player, setPlayer] = useState(null);
   const [otherPlayers, setOtherPlayers] = useState({});
   const [boundaries, setBoundaries] = useState([]);
@@ -18,8 +18,6 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
   const [mapImage, setMapImage] = useState(null);
   const [backgroundImage, setBackgroundImage] = useState(null);
   const [playerImages, setPlayerImages] = useState(null);
-  const [characterImages, setCharacterImages] = useState([]);
-  const [imageLoadError, setImageLoadError] = useState(null);
   const gameContainerRef = useRef(null);
   const playerProximityState = useRef({});
   const interactionMenu = useRef(new InteractionMenu());
@@ -50,30 +48,29 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
 
     const loadAllImages = async () => {
       try {
-        const [mapImg, bgImg, char0, char1, char2, char3] = await Promise.all([
-          loadImage("/images/map.png"),
-          loadImage("/images/background.png"),
-          loadImage("/images/4.png"),
-          loadImage("/images/1.png"),
-          loadImage("/images/2.png"),
-          loadImage("/images/3.png"),
-        ]);
+        const [mapImg, bgImg, downImg, upImg, leftImg, rightImg] =
+          await Promise.all([
+            loadImage("/images/map.png"),
+            loadImage("/images/background.png"),
+            loadImage("/images/playerDown.png"),
+            loadImage("/images/playerUp.png"),
+            loadImage("/images/playerLeft.png"),
+            loadImage("/images/playerRight.png"),
+          ]);
+
         setMapImage(mapImg);
         setBackgroundImage(bgImg);
-        setCharacterImages([char0, char1, char2, char3]);
         setPlayerImages({
-          down: char0, // fallback for legacy code
-          up: char1,
-          left: char2,
-          right: char3,
+          down: downImg,
+          up: upImg,
+          left: leftImg,
+          right: rightImg,
         });
-        setImagesLoaded(true);
-        setImageLoadError(null);
+
+        setImagesLoaded(true); // <-- set flag
+        console.log("All images loaded successfully");
       } catch (error) {
-        setImageLoadError(
-          "Failed to load game images. Please check the image paths and refresh the page."
-        );
-        setImagesLoaded(false);
+        console.error("Error loading images:", error);
       }
     };
 
@@ -116,85 +113,109 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
     fetchIceServers();
   }, []);
 
-  // Multiplayer logic: handle current players
+  // Define all socket handlers with useCallback
   const handleCurrentPlayers = useCallback(
     (players) => {
-      if (characterImages.length === 0) return;
+      console.log("Received current players:", players);
+      console.log("Player Images state (handleCurrentPlayers):", playerImages);
       const others = {};
       Object.entries(players).forEach(([id, data]) => {
-        const charIndex =
-          data.characterIndex !== undefined ? data.characterIndex % 4 : 0;
         others[id] = new Sprite({
           position: data.position,
-          image: characterImages[charIndex],
+          image: playerImages?.[data.direction] || playerImages?.down,
           frames: { max: 4 },
-          sprites: characterImages[charIndex],
+          sprites: playerImages,
           name: data.name,
           id: id,
           speed: 3,
-          characterIndex: charIndex,
-          lastDirection: data.direction || "down",
-          moving: data.moving || false,
         });
       });
       setOtherPlayers(others);
       setPlayerCount(Object.keys(players).length + 1);
     },
-    [characterImages]
+    [playerImages]
   );
 
-  // Multiplayer logic: handle new player
   const handleNewPlayer = useCallback(
     (playerInfo) => {
-      if (characterImages.length === 0) return;
-      setOtherPlayers((prev) => {
-        if (prev[playerInfo.id]) return prev;
-        const charIndex =
-          playerInfo.characterIndex !== undefined
-            ? playerInfo.characterIndex % 4
-            : 0;
-        const newPlayer = new Sprite({
+      console.log("New player joined:", playerInfo);
+      console.log("Player Images state (handleNewPlayer):", playerImages);
+      setOtherPlayers((prev) => ({
+        ...prev,
+        [playerInfo.id]: new Sprite({
           position: playerInfo.position,
-          image: characterImages[charIndex],
+          image: playerImages?.[playerInfo.direction] || playerImages?.down,
           frames: { max: 4 },
-          sprites: characterImages[charIndex],
+          sprites: playerImages,
           name: playerInfo.name,
           id: playerInfo.id,
           speed: 3,
           lastDirection: playerInfo.direction || "down",
           moving: playerInfo.moving || false,
-          characterIndex: charIndex,
-        });
-        return {
-          ...prev,
-          [playerInfo.id]: newPlayer,
-        };
-      });
+        }),
+      }));
       setPlayerCount((prev) => prev + 1);
     },
-    [characterImages]
+    [playerImages]
   );
 
-  // Multiplayer logic: handle player moved
-  const handlePlayerMoved = useCallback((playerInfo) => {
-    setOtherPlayers((prev) => {
-      if (!prev[playerInfo.id]) return prev;
-      const updated = { ...prev };
-      const sprite = updated[playerInfo.id];
+  // const handlePlayerMoved = useCallback(
+  //   (playerInfo) => {
+  //     //console.log('Player moved:', playerInfo);
+  //     setOtherPlayers((prev) => {
+  //       const existing = prev[playerInfo.id];
+  //       if (existing) {
+  //         const updatedPlayer = new Sprite({
+  //           position: playerInfo.position,
+  //           image: playerImages?.[playerInfo.direction] || playerImages?.down,
+  //           frames: { max: 4 },
+  //           sprites: playerImages,
+  //           name: existing.name,
+  //           id: existing.id,
+  //           speed: existing.speed,
+  //           lastDirection: playerInfo.direction,
+  //           moving: playerInfo.moving,
+  //         });
+  //         return {
+  //           ...prev,
+  //           [playerInfo.id]: updatedPlayer,
+  //         };
+  //       }
+  //       return prev;
+  //     });
+  //   },
+  //   [playerImages]
+  // );
 
-      // Only update movement and direction
-      sprite.position = { ...playerInfo.position };
-      sprite.lastDirection = playerInfo.direction || sprite.lastDirection;
-      sprite.moving = !!playerInfo.moving;
+  const handlePlayerMoved = useCallback(
+    (playerInfo) => {
+      setOtherPlayers((prev) => {
+        const existing = prev[playerInfo.id];
+        if (existing) {
+          // Update all fields, including name!
+          return {
+            ...prev,
+            [playerInfo.id]: new Sprite({
+              position: playerInfo.position,
+              image: playerImages?.[playerInfo.direction] || playerImages?.down,
+              frames: { max: 4 },
+              sprites: playerImages,
+              name: playerInfo.name, // <-- make sure this is updated!
+              id: playerInfo.id,
+              speed: existing.speed,
+              lastDirection: playerInfo.direction,
+              moving: playerInfo.moving,
+            }),
+          };
+        }
+        return prev;
+      });
+    },
+    [playerImages]
+  );
 
-      // DO NOT update sprite.image or characterIndex here!
-
-      return updated;
-    });
-  }, []);
-
-  // Multiplayer logic: handle player disconnected
   const handlePlayerDisconnected = useCallback((playerId) => {
+    console.log("Player disconnected:", playerId);
     setOtherPlayers((prev) => {
       const newPlayers = { ...prev };
       delete newPlayers[playerId];
@@ -261,8 +282,7 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
   const findValidSpawnPosition = useCallback(() => {
     for (let i = 0; i < 100; i++) {
       const x = Math.floor(Math.random() * (MAP_WIDTH - 60)) + 30;
-      const y = Math.floor(Math.random() * (MAP_HEIGHT - 60)) + 30;
-
+      const y = Math.floor(Math.random() * (MAP_HEIGHT - 120));
       if (!checkCollision(x, y)) {
         console.log("Found valid spawn position:", { x, y });
         return { x, y };
@@ -579,34 +599,6 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
     cleanupMeetingRoom,
   ]);
 
-  // When initializing the player, use the selected characterIndex
-  useEffect(() => {
-    if (
-      !imagesLoaded ||
-      !playerName ||
-      characterIndex === null ||
-      characterImages.length === 0
-    )
-      return;
-    const charIndex = characterIndex % 4;
-    const initialPlayer = new Sprite({
-      position: findValidSpawnPosition(),
-      image: characterImages[charIndex],
-      frames: { max: 4 },
-      sprites: characterImages[charIndex],
-      name: playerName,
-      speed: 3,
-      characterIndex: charIndex,
-    });
-    setPlayer(initialPlayer);
-  }, [
-    imagesLoaded,
-    playerName,
-    characterIndex,
-    findValidSpawnPosition,
-    characterImages,
-  ]);
-
   return {
     player,
     setPlayer,
@@ -625,11 +617,10 @@ const useGame = (canvasRef, socketRef, keysRef, characterIndex = null) => {
     checkNearbyPlayers,
     mapImage,
     backgroundImage,
-    playerImages: characterImages, // Use characterImages for multiplayer avatars
+    playerImages,
     isInArea2,
     meetingRoomCall,
     setMeetingRoomCall,
-    imageLoadError,
   };
 };
 

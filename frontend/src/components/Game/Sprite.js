@@ -1,4 +1,4 @@
-class Sprite {
+export default class Sprite {
   constructor({
     position,
     image,
@@ -7,24 +7,20 @@ class Sprite {
     name = "",
     id = null,
     speed = 3,
-    lastDirection = "down",
-    moving = false,
-    characterIndex = 0,
   }) {
     this.position = position;
     this.image = image;
-    this.frames = { ...frames, val: 0, elapsed: 0 };
+    this.frames = frames;
     this.sprites = sprites;
-    this.name = name || "";
+    this.name = name;
     this.id = id;
-    this.speed = speed || 2;
-    this.lastDirection = lastDirection;
-    this.moving = moving;
-    this.prevMoving = moving; // Track previous moving state
-    this.characterIndex = characterIndex;
-    this.width = 15;
-    this.height = 15;
-    this.distanceToPlayer = null;
+    this.width = 40;
+    this.height = 40;
+    this.speed = speed;
+    this.frameIndex = 0;
+    this.frameCount = 0;
+    this.moving = false;
+    this.lastDirection = "down";
     this.showInteractionMenu = false;
     this.interactingWith = null;
     this.dialogue = null;
@@ -32,97 +28,59 @@ class Sprite {
   }
 
   setDirection(direction) {
-    this.lastDirection = direction;
-    this.moving = true;
-  }
-
-  updatePosition(newPosition) {
-    this.position = { ...newPosition };
-  }
-
-  updateMovementState({ direction, moving }) {
-    this.lastDirection = direction || this.lastDirection;
-    this.moving = moving !== undefined ? moving : this.moving;
+    if (this.lastDirection !== direction && this.sprites[direction]) {
+      this.image = this.sprites[direction];
+      this.lastDirection = direction;
+    }
   }
 
   draw(ctx) {
-    if (!this.image || !(this.image instanceof HTMLImageElement)) {
-      console.warn(
-        `Cannot draw sprite for ${this.name || this.id}: Invalid image`
-      );
-      return;
-    }
-
-    // Multiplayer logic: support 4-row character sprite sheets
-    const frameWidth = this.image.width / 3;
-    const frameHeight = this.image.height / 4;
-
-    let row = 0;
-    switch (this.lastDirection) {
-      case "down":
-        row = 0;
-        break;
-      case "left":
-        row = 1;
-        break;
-      case "right":
-        row = 2;
-        break;
-      case "up":
-        row = 3;
-        break;
-      default:
-        row = 0;
-    }
-
-    if (this.moving) {
-      this.frames.elapsed++;
-      if (this.frames.elapsed % 10 === 0) {
-        this.frames.val = (this.frames.val + 1) % this.frames.max;
-      }
-    } else if (this.prevMoving) {
-      this.frames.val = 0;
-    }
-    this.prevMoving = this.moving;
-
-    const cropX = this.frames.val * frameWidth;
-    const cropY = row * frameHeight;
-
+    const frameWidth = this.image.width / this.frames.max;
     ctx.drawImage(
       this.image,
-      cropX,
-      cropY,
+      this.frameIndex * frameWidth,
+      0,
       frameWidth,
-      frameHeight,
+      this.image.height,
       this.position.x,
       this.position.y,
-      frameWidth,
-      frameHeight
+      this.width,
+      this.height
     );
 
-    if (this.name) {
-      ctx.fillStyle = "black";
-      ctx.font = "12px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(
-        this.name,
-        this.position.x + frameWidth / 2,
-        this.position.y + 10
-      );
+    // Animate frames only when moving
+    if (this.moving && ++this.frameCount % 10 === 0) {
+      this.frameIndex = (this.frameIndex + 1) % this.frames.max;
+    } else if (!this.moving) {
+      this.frameIndex = 0;
     }
 
-    if (this.distanceToPlayer !== null) {
-      ctx.fillStyle = "red";
-      ctx.font = "10px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(
-        `${this.distanceToPlayer.toFixed(1)} px`,
-        this.position.x + frameWidth / 2,
-        this.position.y - 18
-      );
-    }
-
+    if (this.name) this.drawNameTag(ctx);
     if (this.dialogue) this.drawDialogue(ctx);
+  }
+
+  drawNameTag(ctx) {
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+
+    const textWidth = ctx.measureText(this.name).width;
+    const padding = 4;
+    const bgX = this.position.x + this.width / 2 - textWidth / 2 - padding;
+    const bgY = this.position.y - 20;
+    const bgWidth = textWidth + padding * 2;
+    const bgHeight = 18;
+
+    // Background for the name tag
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
+    // Name text
+    ctx.fillStyle = "white";
+    ctx.fillText(
+      this.name,
+      this.position.x + this.width / 2,
+      this.position.y - 8
+    );
   }
 
   drawDialogue(ctx) {
@@ -141,13 +99,16 @@ class Sprite {
     const bubbleX = this.position.x - bubbleWidth / 2 + this.width / 2;
     const bubbleY = this.position.y - bubbleHeight - 25;
 
+    // Draw speech bubble background
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
     this.drawRoundedRect(ctx, bubbleX, bubbleY, bubbleWidth, bubbleHeight, 8);
 
+    // Draw bubble border
     ctx.strokeStyle = "#333";
     ctx.lineWidth = 1;
     ctx.stroke();
 
+    // Draw pointer
     const pointerX = bubbleX + bubbleWidth / 2;
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
     ctx.beginPath();
@@ -158,6 +119,7 @@ class Sprite {
     ctx.fill();
     ctx.stroke();
 
+    // Draw text
     ctx.fillStyle = "#333";
     ctx.font = "12px Arial";
     ctx.textAlign = "left";
@@ -210,5 +172,3 @@ class Sprite {
     this.dialogueTimer = Date.now() + duration;
   }
 }
-
-export default Sprite;

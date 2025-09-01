@@ -68,7 +68,7 @@ function Chat({ username, socket, chatTargetId }) {
       formData.append("file", file);
       try {
         const res = await axios.post(
-          "https://g-production-c75a.up.railway.app/upload",
+          "https://gather-here-we-go-again-production.up.railway.app/upload",
           formData,
           {
             headers: { "Content-Type": "multipart/form-data" },
@@ -136,7 +136,9 @@ function Chat({ username, socket, chatTargetId }) {
                       sender === socket.id ? "sent" : "received"
                     }`}
                   >
-                    {message.startsWith("http://localhost:3001") ? (
+                    {message.startsWith(
+                      "https://gather-here-we-go-again-production.up.railway.app/upload"
+                    ) ? (
                       <a
                         href={message}
                         target="_blank"
