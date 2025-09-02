@@ -5,8 +5,8 @@ const twilio = require("twilio");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const wname = "AC2b32cfbf7ef504b2d206574bb46935fb";
-const lname = "3941c7e132c80c18e760e125e20ca8ab";
+const wname = "ACbfbcd7cc29b74bb224f2fcf49e659126";
+const lname = "ebebe860eefe269cc263225f6ea0bda6";
 const client = twilio(wname, lname);
 console.log("Twilio client initialized with SID:", wname);
 router.get("/", async (req, res) => {
