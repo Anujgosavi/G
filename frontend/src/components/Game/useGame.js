@@ -101,11 +101,15 @@ const useGame = (canvasRef, socketRef, keysRef) => {
   useEffect(() => {
     const fetchIceServers = async () => {
       try {
-        const res = await axios.get("/api/ice-token");
+        const res = await axios.get(
+          "https://g-production-bfa0.up.railway.app/api/ice-token"
+        );
         setIceConfig(res.data); // expects { iceServers: [...] }
       } catch (err) {
         console.error("Failed to fetch ICE servers:", err);
-        setIceConfig({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+        setIceConfig({
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        });
       }
     };
     fetchIceServers();
@@ -365,15 +369,26 @@ const useGame = (canvasRef, socketRef, keysRef) => {
           typeof rtcConfig !== "object" ||
           !Array.isArray(rtcConfig.iceServers)
         ) {
-          rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+          rtcConfig = {
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+          };
         }
-        console.log("MeetingRoom: Using RTCConfiguration for", participantId, rtcConfig);
+        console.log(
+          "MeetingRoom: Using RTCConfiguration for",
+          participantId,
+          rtcConfig
+        );
 
         let pc;
         try {
           pc = new RTCPeerConnection(rtcConfig);
         } catch (err) {
-          console.error("MeetingRoom: Failed to create RTCPeerConnection for", participantId, err, rtcConfig);
+          console.error(
+            "MeetingRoom: Failed to create RTCPeerConnection for",
+            participantId,
+            err,
+            rtcConfig
+          );
           throw err;
         }
         meetingPeerConnections.current[participantId] = pc;
@@ -391,7 +406,11 @@ const useGame = (canvasRef, socketRef, keysRef) => {
 
         pc.ontrack = (event) => {
           // Only set remote stream if it's not our own stream
-          if (event.streams && event.streams[0] && event.streams[0].id !== stream.id) {
+          if (
+            event.streams &&
+            event.streams[0] &&
+            event.streams[0].id !== stream.id
+          ) {
             setMeetingRoomCall((prev) => {
               return {
                 ...prev,
@@ -405,7 +424,10 @@ const useGame = (canvasRef, socketRef, keysRef) => {
         };
 
         pc.onconnectionstatechange = () => {
-          console.log(`MeetingRoom: Peer ${participantId} connection state:`, pc.connectionState);
+          console.log(
+            `MeetingRoom: Peer ${participantId} connection state:`,
+            pc.connectionState
+          );
         };
 
         return pc;
