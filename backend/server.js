@@ -53,7 +53,7 @@ app.post("/upload", upload.single("file"), (req, res) => {
     return res.status(400).json({ error: "No file uploaded" });
   }
   res.json({
-    filePath: `https://gather-here-we-go-again-production.up.railway.app/${req.file.filename}`,
+    filePath: `https://g-production-bfa0.up.railway.app/${req.file.filename}`,
   });
 });
 
